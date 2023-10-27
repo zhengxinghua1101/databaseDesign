@@ -8,6 +8,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URLEncoder;
 import java.util.List;
 
 /**
@@ -30,9 +36,20 @@ public class TableController {
         List<Table> tables = tableMapper.selectTableByDataBaseName("ds0");
 
 
-
-
         return tables.toString();
+    }
+
+
+    @GetMapping("/export")
+    void export(HttpServletRequest request, HttpServletResponse response) throws IOException {
+
+        String fileName = "123";
+        response.setContentType("application/octet-stream");
+        response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
+        ServletOutputStream stream = response.getOutputStream();
+//        stream.dagaishij
+
+
     }
 
 }

@@ -49,12 +49,13 @@
             <scope>test</scope>
         </dependency>
 
+
+        <!--   以下是需要用到的组件    -->
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-boot-starter</artifactId>
             <version>3.5.1</version>
         </dependency>
-
 
         <dependency>
             <groupId>cn.hutool</groupId>
@@ -62,6 +63,12 @@
             <version>5.8.3</version>
         </dependency>
 
+        <!--    #07版本    -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>4.1.2</version>
+        </dependency>
     </dependencies>
 
     <build>
