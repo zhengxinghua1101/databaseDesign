@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -75,7 +76,7 @@ public class PoiUtils {
             temp.createCell(0).setCellValue(i + 1);
             Cell tableNameCell = temp.createCell(1);
             tableNameCell.setCellValue(list.get(i).getTableName());
-            String linkName = "#" + list.get(i).getTableName() + "!A2";
+            String linkName = "#" + list.get(i).getTableName() + "!A1";
             link.setAddress(linkName);  // #sheet2!A10跳转到sheet名称为sheet2的A10中去
             tableNameCell.setHyperlink(link);
 
@@ -89,11 +90,52 @@ public class PoiUtils {
     }
 
 
-    static void addTableDetail(Workbook workbook, List<Table> list) {
+    static void addTableDetail(Workbook workbook, List<Table> list, Integer index) {
 
-        Sheet directory = workbook.createSheet("数据库设计目录");
+        String sheetName = list.get(0).getTableName();
+        String tableComment = list.get(0).getTableComment();
+        Sheet directory = workbook.createSheet(sheetName);
+        // 超链接
+        CreationHelper creationHelper = workbook.getCreationHelper();
+        Hyperlink link = creationHelper.createHyperlink(HyperlinkType.FILE);
+
         directory.setDefaultRowHeight((short) 500); // 系统默认是280左右
         directory.setDefaultColumnWidth(25);  //系统默认是8左右
+
+        Row row1 = directory.createRow(0);
+        row1.setHeightInPoints(35); //默认是16左右
+        Cell cell1 = row1.createCell(0);
+        cell1.setCellValue(sheetName);
+        String linkName = "#数据库设计目录!B" + (2 + index);
+        link.setAddress(linkName);  // #sheet2!A10跳转到sheet名称为sheet2的A10中去
+        cell1.setHyperlink(link);
+        directory.addMergedRegion(new CellRangeAddress(0, 0, 0, 2));
+
+        row1.createCell(3).setCellValue(tableComment);
+        directory.addMergedRegion(new CellRangeAddress(0, 0, 3, 5));
+
+
+        //第二行
+        Row row2 = directory.createRow(1);
+        row2.setHeightInPoints(20); //默认是16左右
+        row2.createCell(0).setCellValue("序号");
+        row2.createCell(1).setCellValue("字段名(中文)");
+        row2.createCell(2).setCellValue("字段名(英文)");
+        row2.createCell(3).setCellValue("类型");
+        row2.createCell(4).setCellValue("大小");
+        row2.createCell(5).setCellValue("备注");
+
+        for (int i = 0; i < list.size(); i++) {
+            Row temp = directory.createRow(2 + i);
+            temp.setHeightInPoints(20); //默认是16左右
+            temp.createCell(0).setCellValue(i + 1);
+            temp.createCell(1).setCellValue(list.get(i).getColumnComment());
+            temp.createCell(2).setCellValue(list.get(i).getColumnName());
+            temp.createCell(3).setCellValue(list.get(i).getColumnType());
+            temp.createCell(4).setCellValue(list.get(i).getColumnType());
+            temp.createCell(5).setCellValue(list.get(i).getColumnComment());
+        }
+
 
     }
 
@@ -182,11 +224,18 @@ public class PoiUtils {
         cellStyle.setBorderRight(BorderStyle.THIN);
         cellStyle.setBorderTop(BorderStyle.THIN);
 
+        //主页
         List<Table> tableDistinctList = getTableDistinctList(list);
         addTableDirectory(workbook, tableDistinctList);
 
 
-//        addTableDirectory(workbook, list);
+        //细节
+        Integer index = 0;
+        Map<String, List<Table>> tableMap = list.stream().collect(Collectors.groupingBy(Table::getTableName));
+        for (List<Table> tableList : tableMap.values()) {
+            index++;
+            addTableDetail(workbook, tableList, index);
+        }
 
 
         //设置所有样式（会覆盖原有的样式）
