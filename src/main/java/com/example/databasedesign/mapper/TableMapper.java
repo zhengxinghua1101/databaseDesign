@@ -17,7 +17,7 @@ import java.util.List;
 public interface TableMapper extends BaseMapper<Table> {
 
 
-    @Select("select a.table_schema,a.engine ,a.table_name ,a.create_time,a.table_comment  ,b.column_name ,b.column_comment ,b.column_type from information_schema.tables a  left join information_schema.columns b on a.table_name = b.table_name  where a.table_schema = #{tableSchema} order by a.table_name")
+    @Select("select a.table_schema,a.engine ,a.table_name ,a.create_time,a.table_comment  ,b.column_name ,b.column_comment ,b.column_type,b.data_type ,b.character_maximum_length from information_schema.tables a  left join information_schema.columns b on a.table_name = b.table_name  where a.table_schema = #{tableSchema} order by a.table_name")
     List<Table> selectTableByDataBaseName(String tableSchema);
 
 }

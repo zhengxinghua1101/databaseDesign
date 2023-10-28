@@ -2,6 +2,7 @@ package com.example.databasedesign.utils;
 
 import cn.hutool.core.date.DateUtil;
 import com.example.databasedesign.annotation.ExcelAttribute;
+import com.example.databasedesign.annotation.ExcelDetail;
 import com.example.databasedesign.annotation.ExcelDirectory;
 import com.example.databasedesign.vo.Table;
 import org.apache.poi.common.usermodel.HyperlinkType;
@@ -36,7 +37,7 @@ public class PoiUtils {
             table.setTableComment(item.getTableComment());
             table.setEngine(item.getEngine());
             table.setTableSchema(item.getTableSchema());
-            table.setCreateDate(item.getCreateDate());
+            table.setCreateTime(item.getCreateTime());
             return table;
         }).distinct().collect(Collectors.toList());
         return list1;
@@ -112,7 +113,13 @@ public class PoiUtils {
                     try {
                         field.setAccessible(true);
                         Cell tempCell = temp.createCell(index);
-                        if (field.getType().toString().equals("class java.util.Date")) {
+                        String cellValue = "";
+                        if (field.get(table) != null) {
+                            cellValue = field.get(table).toString();
+                        }
+                        if (cellValue.equals("")) {
+                            tempCell.setCellValue("");
+                        } else if (field.getType().toString().equals("class java.util.Date")) {
                             tempCell.setCellValue(DateUtil.format(DateUtil.parse(field.get(table).toString()), "yyyy-MM-dd HH:mm:ss"));
                         } else {
                             tempCell.setCellValue(field.get(table).toString());
@@ -124,6 +131,12 @@ public class PoiUtils {
                             String linkName = "#" + field.get(table).toString() + "!A1";
                             link.setAddress(linkName);  // #sheet2!A10跳转到sheet名称为sheet2的A10中去
                             tempCell.setHyperlink(link);
+
+                            CellStyle cellStyle = workbook.createCellStyle();
+                            Font font = workbook.createFont();
+                            font.setColor(IndexedColors.LIGHT_TURQUOISE.getIndex());
+                            cellStyle.setFont(font);
+                            tempCell.setCellStyle(cellStyle);
                         }
                         index++;
                     } catch (Exception e) {
@@ -136,6 +149,28 @@ public class PoiUtils {
 
 
     public static void addTableDetail(Workbook workbook, List<Table> list, Integer index) {
+        String tempSheetIndex = "数据库设计目录";
+        int countIndex = 0;
+        boolean isUseSn = true;
+        Class<Table> tableClass = Table.class;
+        boolean isHadExcelAttribute = tableClass.isAnnotationPresent(ExcelAttribute.class);
+        if (isHadExcelAttribute) {
+            //含有
+            ExcelAttribute annotation = tableClass.getAnnotation(ExcelAttribute.class);
+            tempSheetIndex = annotation.name();
+            //使用序号
+            if (!annotation.useSN()) {
+                isUseSn = false;
+            }
+        }
+
+        Field[] fields = tableClass.getDeclaredFields();
+        for (Field field : fields) {
+            if (field.isAnnotationPresent(ExcelDetail.class)) {
+                countIndex++;
+            }
+        }
+
 
         String sheetName = list.get(0).getTableName();
         String tableComment = list.get(0).getTableComment();
@@ -151,37 +186,59 @@ public class PoiUtils {
         row1.setHeightInPoints(35); //默认是16左右
         Cell cell1 = row1.createCell(0);
         cell1.setCellValue(sheetName);
-        String linkName = "#数据库设计目录!B" + (2 + index);
+        String linkName = "#" + tempSheetIndex + "!B" + (2 + index);
         link.setAddress(linkName);  // #sheet2!A10跳转到sheet名称为sheet2的A10中去
         cell1.setHyperlink(link);
-        directory.addMergedRegion(new CellRangeAddress(0, 0, 0, 2));
+        directory.addMergedRegion(new CellRangeAddress(0, 0, 0, isUseSn ? countIndex / 2 : (countIndex - 1) / 2));
 
-        row1.createCell(3).setCellValue(tableComment);
-        directory.addMergedRegion(new CellRangeAddress(0, 0, 3, 5));
+        row1.createCell(countIndex / 2 + 1).setCellValue(tableComment);
+        directory.addMergedRegion(new CellRangeAddress(0, 0, isUseSn ? (countIndex / 2) + 1 : ((countIndex - 1) / 2) + 1, isUseSn ? countIndex : countIndex - 1));
 
 
         //第二行
         Row row2 = directory.createRow(1);
         row2.setHeightInPoints(20); //默认是16左右
-        row2.createCell(0).setCellValue("序号");
-        row2.createCell(1).setCellValue("字段名(中文)");
-        row2.createCell(2).setCellValue("字段名(英文)");
-        row2.createCell(3).setCellValue("类型");
-        row2.createCell(4).setCellValue("大小");
-        row2.createCell(5).setCellValue("备注");
+        int cell2Number = 0;
+        if (isUseSn) {
+            row2.createCell(cell2Number).setCellValue("序号");
+            cell2Number++;
+        }
+        for (Field field : fields) {
+            if (field.isAnnotationPresent(ExcelDetail.class)) {
+                String name = field.getAnnotation(ExcelDetail.class).name();
+                row2.createCell(cell2Number).setCellValue(name);
+                cell2Number++;
+            }
+        }
+
 
         for (int i = 0; i < list.size(); i++) {
             Row temp = directory.createRow(2 + i);
             temp.setHeightInPoints(20); //默认是16左右
-            temp.createCell(0).setCellValue(i + 1);
-            temp.createCell(1).setCellValue(list.get(i).getColumnComment());
-            temp.createCell(2).setCellValue(list.get(i).getColumnName());
-            temp.createCell(3).setCellValue(list.get(i).getColumnType());
-            temp.createCell(4).setCellValue(list.get(i).getColumnType());
-            temp.createCell(5).setCellValue(list.get(i).getColumnComment());
+            Table table = list.get(i);
+            int indexDetail = 0;
+            if (isUseSn) {
+                temp.createCell(indexDetail).setCellValue(i + 1);
+                indexDetail++;
+            }
+
+            for (Field field : table.getClass().getDeclaredFields()) {
+                if (field.isAnnotationPresent(ExcelDetail.class)) {
+                    try {
+                        field.setAccessible(true);
+                        Cell tempCell = temp.createCell(indexDetail);
+                        String cellValue = "";
+                        if (field.get(table) != null) {
+                            cellValue = field.get(table).toString();
+                        }
+                        tempCell.setCellValue(cellValue);
+                        indexDetail++;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
         }
-
-
     }
 
 
@@ -192,10 +249,8 @@ public class PoiUtils {
         table.setColumnComment("需要的");
         table.setColumnName("table_name");
         table.setTableComment("表名");
-        table.setColumnType("varchar(50)");
         table.setTableSchema("soft_cloud3");
         table.setEngine("InnoDB");
-        table.setCreateDate(new Date());
         list.add(table);
 
         Table table1 = new Table();
@@ -203,8 +258,6 @@ public class PoiUtils {
         table1.setColumnComment("删除");
         table1.setColumnName("is_delete");
         table1.setTableComment("表名");
-        table1.setColumnType("tinyint(1)");
-        table1.setCreateDate(new Date());
         table1.setTableSchema("soft_cloud3");
         table1.setEngine("InnoDB");
         list.add(table1);
@@ -214,8 +267,6 @@ public class PoiUtils {
         table2.setColumnComment("主键");
         table2.setColumnName("id");
         table2.setTableComment("表名");
-        table2.setColumnType("bigint");
-        table2.setCreateDate(new Date());
         table2.setEngine("InnoDB");
         table2.setTableSchema("soft_cloud3");
         list.add(table2);
@@ -225,8 +276,6 @@ public class PoiUtils {
         table3.setColumnComment("用户id");
         table3.setColumnName("user_id");
         table3.setTableComment("用户表");
-        table2.setColumnType("bigint");
-        table3.setCreateDate(new Date());
         table3.setEngine("InnoDB");
         table3.setTableSchema("soft_cloud3");
         list.add(table3);
@@ -236,8 +285,6 @@ public class PoiUtils {
         table4.setColumnComment("标识");
         table4.setColumnName("remark");
         table4.setTableComment("用户表");
-        table2.setColumnType("varchar(50)");
-        table4.setCreateDate(new Date());
         table4.setEngine("InnoDB");
         table4.setTableSchema("soft_cloud3");
         list.add(table4);
@@ -287,6 +334,8 @@ public class PoiUtils {
         for (Sheet rows : workbook) {
             for (Row cells : rows) {
                 for (Cell cell1 : cells) {
+                    CellStyle cellStyle1 = cell1.getCellStyle();
+
                     cell1.setCellStyle(cellStyle);
                 }
             }

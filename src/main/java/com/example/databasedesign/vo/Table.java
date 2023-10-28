@@ -1,6 +1,7 @@
 package com.example.databasedesign.vo;
 
 import com.example.databasedesign.annotation.ExcelAttribute;
+import com.example.databasedesign.annotation.ExcelDetail;
 import com.example.databasedesign.annotation.ExcelDirectory;
 import lombok.Data;
 
@@ -29,10 +30,17 @@ public class Table {
     private String engine; //引擎
 
     @ExcelDirectory(name = "创建时间")
-    private Date createDate; //表的创建时间
+    private Date createTime; //表的创建时间
 
-
+    @ExcelDetail(name = "字段")
     private String columnName; //字段
-    private String columnType; //字段类型
+
+    @ExcelDetail(name = "字段类型")
+    private String dataType; //字段类型
+
+    @ExcelDetail(name = "长度")
+    private Integer characterMaximumLength; //长度
+
+    @ExcelDetail(name = "字段备注")
     private String columnComment; //字段备注
 }
