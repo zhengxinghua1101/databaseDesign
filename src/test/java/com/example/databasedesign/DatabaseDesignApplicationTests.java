@@ -1,6 +1,9 @@
 package com.example.databasedesign;
 
 import cn.hutool.core.date.DateTime;
+import com.example.databasedesign.mapper.TableMapper;
+import com.example.databasedesign.utils.PoiUtils;
+import com.example.databasedesign.vo.Table;
 import org.apache.poi.common.usermodel.HyperlinkType;
 import org.apache.poi.hssf.usermodel.HSSFHyperlink;
 import org.apache.poi.hssf.usermodel.HSSFPatriarch;
@@ -8,15 +11,23 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @SpringBootTest
 class DatabaseDesignApplicationTests {
+
+
+    @Autowired
+    TableMapper tableMapper;
 
     @Test
     void contextLoads() {
@@ -111,6 +122,60 @@ class DatabaseDesignApplicationTests {
         workbook.write(fileOutputStream);
         fileOutputStream.close();
         System.out.println("文件生成完毕");
+    }
+
+
+    @Test
+    void test2() throws Exception {
+        File file = new File("C:\\Users\\Jeff.zheng.SOFTIDE\\Desktop\\test.xlsx");
+        if (file.exists()) {
+            file.delete();
+            System.out.println("删除文件成功");
+        }
+
+
+        String path = "C:\\Users\\Jeff.zheng.SOFTIDE\\Desktop\\";
+
+        List<com.example.databasedesign.vo.Table> list = tableMapper.selectTableByDataBaseName("softide_cloud3");
+
+        Workbook workbook = new XSSFWorkbook();
+        CellStyle cellStyle = workbook.createCellStyle();
+        cellStyle.setAlignment(HorizontalAlignment.CENTER); //水平居中
+        cellStyle.setVerticalAlignment(VerticalAlignment.CENTER); //垂直居中
+        cellStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        cellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        cellStyle.setBorderBottom(BorderStyle.THIN);
+        cellStyle.setBorderLeft(BorderStyle.THIN);
+        cellStyle.setBorderRight(BorderStyle.THIN);
+        cellStyle.setBorderTop(BorderStyle.THIN);
+
+        //主页
+        List<com.example.databasedesign.vo.Table> tableDistinctList = PoiUtils.getTableDistinctList(list);
+        PoiUtils.addTableDirectory(workbook, tableDistinctList);
+
+
+        //细节
+        Integer index = 0;
+        Map<String, List<com.example.databasedesign.vo.Table>> tableMap = list.stream().collect(Collectors.groupingBy(com.example.databasedesign.vo.Table::getTableName));
+        for (List<Table> tableList : tableMap.values()) {
+            index++;
+            PoiUtils.addTableDetail(workbook, tableList, index);
+        }
+
+
+        //设置所有样式（会覆盖原有的样式）
+        for (Sheet rows : workbook) {
+            for (Row cells : rows) {
+                for (Cell cell1 : cells) {
+                    cell1.setCellStyle(cellStyle);
+                }
+            }
+        }
+
+        FileOutputStream fileOutputStream = new FileOutputStream(path + "test.xlsx");
+        workbook.write(fileOutputStream);
+        fileOutputStream.close();
+        System.out.println("文件渡劫成功");
     }
 
 
