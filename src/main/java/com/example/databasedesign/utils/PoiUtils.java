@@ -15,7 +15,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -48,6 +47,7 @@ public class PoiUtils {
         String sheetName = "数据库设计目录";
         int countIndex = 0;
         boolean isUseSn = true;
+        int SNWidth = 25;
         Class<Table> tableClass = Table.class;
         boolean isHadExcelAttribute = tableClass.isAnnotationPresent(ExcelAttribute.class);
         if (isHadExcelAttribute) {
@@ -58,7 +58,9 @@ public class PoiUtils {
             //使用序号
             if (!annotation.useSN()) {
                 isUseSn = false;
+
             }
+            SNWidth = (int) annotation.SNWidth();
         }
 
 
@@ -87,12 +89,21 @@ public class PoiUtils {
         int cell2Number = 0;
         if (isUseSn) {
             row2.createCell(cell2Number).setCellValue("序号");
+            if (SNWidth != 25) {
+                directory.setColumnWidth(cell2Number, SNWidth);
+            }
             cell2Number++;
         }
         for (Field field : fields) {
             if (field.isAnnotationPresent(ExcelDirectory.class)) {
                 String name = field.getAnnotation(ExcelDirectory.class).name();
                 row2.createCell(cell2Number).setCellValue(name);
+
+                //宽度
+                if ((int) field.getAnnotation(ExcelDirectory.class).width() != 25) {
+                    directory.setColumnWidth(cell2Number, (int) field.getAnnotation(ExcelDirectory.class).width());
+                }
+
                 cell2Number++;
             }
         }
@@ -135,6 +146,7 @@ public class PoiUtils {
                             CellStyle cellStyle = workbook.createCellStyle();
                             Font font = workbook.createFont();
                             font.setColor(IndexedColors.LIGHT_TURQUOISE.getIndex());
+                            font.setBold(true);
                             cellStyle.setFont(font);
                             tempCell.setCellStyle(cellStyle);
                         }
@@ -152,6 +164,7 @@ public class PoiUtils {
         String tempSheetIndex = "数据库设计目录";
         int countIndex = 0;
         boolean isUseSn = true;
+        int SNWidth = 25;
         Class<Table> tableClass = Table.class;
         boolean isHadExcelAttribute = tableClass.isAnnotationPresent(ExcelAttribute.class);
         if (isHadExcelAttribute) {
@@ -162,6 +175,9 @@ public class PoiUtils {
             if (!annotation.useSN()) {
                 isUseSn = false;
             }
+
+            SNWidth = (int) annotation.SNWidth();
+
         }
 
         Field[] fields = tableClass.getDeclaredFields();
@@ -191,7 +207,7 @@ public class PoiUtils {
         cell1.setHyperlink(link);
         directory.addMergedRegion(new CellRangeAddress(0, 0, 0, isUseSn ? countIndex / 2 : (countIndex - 1) / 2));
 
-        row1.createCell(countIndex / 2 + 1).setCellValue(tableComment);
+        row1.createCell(isUseSn ? (countIndex / 2) + 1 : ((countIndex - 1) / 2) + 1).setCellValue(tableComment);
         directory.addMergedRegion(new CellRangeAddress(0, 0, isUseSn ? (countIndex / 2) + 1 : ((countIndex - 1) / 2) + 1, isUseSn ? countIndex : countIndex - 1));
 
 
@@ -201,12 +217,21 @@ public class PoiUtils {
         int cell2Number = 0;
         if (isUseSn) {
             row2.createCell(cell2Number).setCellValue("序号");
+            if (SNWidth != 25) {
+                directory.setColumnWidth(cell2Number, SNWidth);
+            }
             cell2Number++;
         }
         for (Field field : fields) {
             if (field.isAnnotationPresent(ExcelDetail.class)) {
                 String name = field.getAnnotation(ExcelDetail.class).name();
                 row2.createCell(cell2Number).setCellValue(name);
+
+                //宽度
+                if ((int) field.getAnnotation(ExcelDetail.class).width() != 25) {
+                    directory.setColumnWidth(cell2Number, (int) field.getAnnotation(ExcelDetail.class).width());
+                }
+
                 cell2Number++;
             }
         }
@@ -231,7 +256,13 @@ public class PoiUtils {
                         if (field.get(table) != null) {
                             cellValue = field.get(table).toString();
                         }
-                        tempCell.setCellValue(cellValue);
+                        if (cellValue.equals("")) {
+                            tempCell.setCellValue("");
+                        } else if (field.getType().toString().equals("class java.util.Date")) {
+                            tempCell.setCellValue(DateUtil.format(DateUtil.parse(field.get(table).toString()), "yyyy-MM-dd HH:mm:ss"));
+                        } else {
+                            tempCell.setCellValue(field.get(table).toString());
+                        }
                         indexDetail++;
                     } catch (Exception e) {
                         e.printStackTrace();

@@ -18,6 +18,6 @@ public @interface ExcelAttribute {
 
     public boolean useSN() default true; //默认使用序号
 
-
+    public double SNWidth() default 25; //序列号的宽度默认是25 * 256
 
 }

@@ -14,7 +14,7 @@ import java.util.Date;
  * @version: 1.0.0
  */
 @Data
-@ExcelAttribute(name = "数据库设计")
+@ExcelAttribute(name = "数据库设计", SNWidth = 10 * 256, useSN = true)
 public class Table {
 
     @ExcelDirectory(name = "表名(英文)", useInk = true)
@@ -29,18 +29,19 @@ public class Table {
     @ExcelDirectory(name = "引擎")
     private String engine; //引擎
 
-    @ExcelDirectory(name = "创建时间")
-    private Date createTime; //表的创建时间
-
-    @ExcelDetail(name = "字段")
+    @ExcelDetail(name = "字段", width = 40 * 256)
     private String columnName; //字段
 
-    @ExcelDetail(name = "字段类型")
+    @ExcelDetail(name = "字段类型", width = 20 * 256)
     private String dataType; //字段类型
 
-    @ExcelDetail(name = "长度")
+    @ExcelDetail(name = "长度", width = 20 * 256)
     private Integer characterMaximumLength; //长度
 
-    @ExcelDetail(name = "字段备注")
+    @ExcelDetail(name = "字段备注", width = 50 * 256)
     private String columnComment; //字段备注
+
+    @ExcelDirectory(name = "创建时间")
+    @ExcelDetail(name = "创建时间", width = 50 * 256)
+    private Date createTime; //表的创建时间
 }

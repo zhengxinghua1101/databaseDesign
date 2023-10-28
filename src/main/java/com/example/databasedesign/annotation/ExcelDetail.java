@@ -17,7 +17,6 @@ public @interface ExcelDetail {
 
     public String name() default "";
 
-    public boolean useSN() default true; //默认使用序号
+    public double width() default 25; //默认是25 * 256
 
-    public double width() default 16;
 }
