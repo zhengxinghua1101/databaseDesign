@@ -136,7 +136,7 @@ class DatabaseDesignApplicationTests {
 
         String path = "C:\\Users\\Jeff.zheng.SOFTIDE\\Desktop\\";
 
-        List<com.example.databasedesign.vo.Table> list = tableMapper.selectTableByDataBaseName("softide_cloud3");
+        List<com.example.databasedesign.vo.Table> list = tableMapper.selectTableByDataBaseName("xxl_job");
 
         Workbook workbook = new XSSFWorkbook();
         CellStyle cellStyle = workbook.createCellStyle();
