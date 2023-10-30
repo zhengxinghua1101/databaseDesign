@@ -17,6 +17,8 @@ public @interface ExcelDetail {
 
     public String name() default "";
 
-    public double width() default 25; //默认是25 * 256
+    public int width() default 25; //默认是25 * 256
+
+    public String readConverterExp() default "";  //读取内容转表达式 (如: 0=男,1=女,2=未知)
 
 }

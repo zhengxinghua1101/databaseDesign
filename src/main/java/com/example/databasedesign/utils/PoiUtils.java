@@ -160,6 +160,25 @@ public class PoiUtils {
     }
 
 
+    public static String converterExp(String value, String exp) {
+        String result = value;
+        if (!exp.equals("") && value.length() > 0) {
+            String[] splitKV = exp.split(",");
+            for (String item : splitKV) {
+                String[] kVMap = item.split("=");
+                String sKey = kVMap.length >= 1 ? kVMap[0] : "";
+                String sValue = kVMap.length >= 2 ? kVMap[1] : "";
+                if (sKey.equals("*") && result.equals(value)) {
+                    result = sValue;
+                } else if (result.equals(value)) {
+                    result = value.replaceAll(sKey, sValue);
+                }
+            }
+        }
+        return result;
+    }
+
+
     public static void addTableDetail(Workbook workbook, List<Table> list, Integer index) {
         String tempSheetIndex = "数据库设计目录";
         int countIndex = 0;
@@ -256,12 +275,19 @@ public class PoiUtils {
                         if (field.get(table) != null) {
                             cellValue = field.get(table).toString();
                         }
+                        //表达式转化器
+                        if (!field.getAnnotation(ExcelDetail.class).readConverterExp().equals("") && cellValue.length() > 0) {
+                            String exp = field.getAnnotation(ExcelDetail.class).readConverterExp();
+                            cellValue = converterExp(cellValue, exp);
+                        }
+
+
                         if (cellValue.equals("")) {
                             tempCell.setCellValue("");
                         } else if (field.getType().toString().equals("class java.util.Date")) {
                             tempCell.setCellValue(DateUtil.format(DateUtil.parse(field.get(table).toString()), "yyyy-MM-dd HH:mm:ss"));
                         } else {
-                            tempCell.setCellValue(field.get(table).toString());
+                            tempCell.setCellValue(cellValue);
                         }
                         indexDetail++;
                     } catch (Exception e) {

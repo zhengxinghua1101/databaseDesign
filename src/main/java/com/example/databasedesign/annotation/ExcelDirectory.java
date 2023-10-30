@@ -17,8 +17,7 @@ public @interface ExcelDirectory {
 
     public String name() default ""; //名称
 
-    public double width() default 25; //宽度默认是25 * 256
-
+    public int width() default 25; //宽度默认是25 * 256
 
     public boolean useInk() default false; //默认超链接
 }
